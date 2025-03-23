@@ -62,12 +62,8 @@ struct Hand{
 	void add_card(char c){
 		int value;
 		if (c == 'A') {
-			if(acee){
-				ace = true;
-				value = 11;
-			}else{
-				value = 1;
-			}
+			ace = true;
+			value = 11;
 		} else if (c == 'T') {
 			value = 10;
 		} else {
@@ -82,11 +78,10 @@ struct Hand{
 	}
 };
 int random_choice(double hit){
-	double c = (rand() % RAND_MAX) / (double) RAND_MAX;
+	double c = (rand() % RAND_MAX) * 1.0 / (double) RAND_MAX;
 	return c <= hit;
 }
-vector<pair<pair<ii,ii>,int>> play_episode(int first_cardx = -1,int player_pointx = 0,int usable_ace = 0){
-	acee = usable_ace;
+vector<pair<pair<ii,ii>,double>> play_episode(int first_cardx = -1,int player_pointx = 0,int usable_ace = 0){
 	f.newgame();
 	Hand player, dealer;
 	
@@ -102,18 +97,25 @@ vector<pair<pair<ii,ii>,int>> play_episode(int first_cardx = -1,int player_point
 		player.ace = usable_ace;
 	}
 	
-	vector<pair<pair<ii,ii>,int>> d;
+	vector<pair<pair<ii,ii>,double>> d;
 	
 	while(true){
 		int action = random_choice(policy[first_card][player.point][player.ace]);
+		if(player.point == 21){
+			d.push_back({{{first_card,player.point},{player.ace,0}},1});
+			break;
+		}
 		if(action == 0){
 			while(dealer.point < 17){
 				dealer.add_card(f.draw_card());
 			}
-			if(dealer.point > player.point){
-				d.push_back({{{first_card,player.point},{player.ace,action}},-1});
-			}else if(dealer.burst || player.point > dealer.point){
+			if(dealer.burst || player.point > dealer.point){
 				d.push_back({{{first_card,player.point},{player.ace,action}},1});
+			}else if(dealer.point > player.point){
+				d.push_back({{{first_card,player.point},{player.ace,action}},-1});
+//				if(player.point >= 20){
+//					cout << player.point << " " << dealer.point << '\n';
+//				}
 			}else d.push_back({{{first_card,player.point},{player.ace,action}},0});
 			break;
 		}
@@ -128,7 +130,8 @@ vector<pair<pair<ii,ii>,int>> play_episode(int first_cardx = -1,int player_point
 			d.push_back({{{first_card,lp},{la,action}},1});
 			break;
 		}else {
-			d.push_back({{{first_card,lp},{la,action}},0});
+			if(lp <= 11)d.push_back({{{first_card,lp},{la,action}},1});
+			else d.push_back({{{first_card,lp},{la,action}},0});
 		}
 	}
 	// reward : 0 -> chua burst hoac hoa dealer 
@@ -138,12 +141,12 @@ vector<pair<pair<ii,ii>,int>> play_episode(int first_cardx = -1,int player_point
 	return d;
 }
 void play(int first_cardx = -1,int player_pointx = 0,int usable_ace = 0,double gamma = 0.1){
-	vector<pair<pair<ii,ii>,int>> episode = play_episode(first_cardx,player_pointx,usable_ace);
+	vector<pair<pair<ii,ii>,double>> episode = play_episode(first_cardx,player_pointx,usable_ace);
 	reverse(episode.begin(),episode.end());
 	
 	double G = 0;
 	
-	epsilon = max(epsilon * 0.99995,0.01);
+	epsilon = epsilon * 0.99995;
 	for(auto e : episode){
 		int first_card = e.X.X.X;
 		int player_point = e.X.X.Y;
@@ -152,7 +155,7 @@ void play(int first_cardx = -1,int player_pointx = 0,int usable_ace = 0,double g
 		int reward = e.Y;
 		
 		G = gamma * G + 1.0 * reward;
-		
+		//cout << G << "\n";
 		// vi trong blackjack nen moi state se chi xuat hien 1 lan -> kh can dk 
 		
 		if((G >= 0 && player_action == 1) || (G <= 0 && player_action == 0)){
@@ -196,7 +199,7 @@ void initial(){
 signed main(){
 	read();
 	freopen("dealer.out","w",stdout);
-	epsilon = 0.01;
+	epsilon = 0.2;
 	srand(time(0));
 	f.setup();
 	initial();
@@ -210,9 +213,9 @@ signed main(){
 		vector<int> x;
 		vector<int> y;
 		
-		for(int dealer = 2;dealer <= 11;dealer++){
+		for(int dealer = 1;dealer <= 11;dealer++){
 			int last = 11;
-			for(int player = 11;player <= 21;player++){
+			for(int player = 1;player <= 21;player++){
 				//cout << dealer << " " << player << ' ' << policy[dealer][player][i] << "\n";
 				if(policy[dealer][player][i] >= 0.5){
 					last = player;
@@ -240,14 +243,19 @@ signed main(){
 	
 	while(a[0].size() < a[2].size()){
 		a[0].push_back(1);
-		a[1].push_back(11);
+		a[1].push_back(1);
 	}
 	
 	
 	while(a[0].size() > a[2].size()){
 		a[2].push_back(1);
-		a[3].push_back(11);
+		a[3].push_back(1);
 	}
+	
+	a[0].push_back(1);
+	a[1].push_back(1);
+	a[2].push_back(1);
+	a[3].push_back(1);	
 	
 	for(int i = 0;i < a[0].size();i++){
 		cout << a[0][i] << "," << a[1][i] << "," << a[2][i] << "," << a[3][i] << '\n';
