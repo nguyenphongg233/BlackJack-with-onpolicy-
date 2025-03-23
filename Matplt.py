@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import subprocess
 
-# Chạy dealer.exe trong cùng thư mục với file Python
 subprocess.run(["dealer.exe"])
 
 data = np.loadtxt('dealer.out', delimiter=',', skiprows=1)  
@@ -23,4 +22,5 @@ plt.xlabel("Dealer's first card")
 plt.ylabel("Player's current point")
 plt.title("usable ACE")
 
-plt.show()
+plt.show() 
+
