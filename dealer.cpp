@@ -21,6 +21,10 @@ int Rand(int l,int r){
 }
 double epsilon;
 double policy[20][22][2];
+int state_count[20][22][2][2];
+double state_sum[20][22][2][2];
+double state_value[20][22][2][2];
+
 // dealer_first_card - player_current_sum - usable ace 
 bool acee = 0;
 struct BlackJack{
@@ -34,7 +38,7 @@ struct BlackJack{
 		}
 	}
 	char draw_card(){
-		return a[Rand(0,51)];
+		return a[t++];
 	}
 	void setup(){
 		for(int i = 0; i < 4; i++){
@@ -130,8 +134,7 @@ vector<pair<pair<ii,ii>,double>> play_episode(int first_cardx = -1,int player_po
 			d.push_back({{{first_card,lp},{la,action}},1});
 			break;
 		}else {
-			if(lp <= 11)d.push_back({{{first_card,lp},{la,action}},1});
-			else d.push_back({{{first_card,lp},{la,action}},0});
+			d.push_back({{{first_card,lp},{la,action}},0});
 		}
 	}
 	// reward : 0 -> chua burst hoac hoa dealer 
@@ -155,30 +158,36 @@ void play(int first_cardx = -1,int player_pointx = 0,int usable_ace = 0,double g
 		int reward = e.Y;
 		
 		G = gamma * G + 1.0 * reward;
+		state_count[first_card][player_point][player_ace][player_action]++;
+		state_sum[first_card][player_point][player_ace][player_action] += G;
+		state_value[first_card][player_point][player_ace][player_action] = state_sum[first_card][player_point][player_ace][player_action] / state_count[first_card][player_point][player_ace][player_action];
+		
 		//cout << G << "\n";
 		// vi trong blackjack nen moi state se chi xuat hien 1 lan -> kh can dk 
 		
-		if((G >= 0 && player_action == 1) || (G <= 0 && player_action == 0)){
+		if(state_value[first_card][player_point][player_ace][1] > state_value[first_card][player_point][player_ace][0]){
 			policy[first_card][player_point][player_ace] = 1.0 - epsilon + epsilon / 2.0;
 		}else{
 			policy[first_card][player_point][player_ace] = epsilon / 2.0;
 		}
 	}
 }
-void on_policy(int t = 10000){
+void on_policy(int t = 100000){
 	while(t--){
 		//cout << t << '\n';
-		for(int first_CARD = 1;first_CARD < 12;first_CARD++){
-			for(int player_point = 12;player_point <= 21;player_point++){
-				play(first_CARD,player_point,1);
-			}
-		}
-		for(int first_CARD = 1;first_CARD < 12;first_CARD++){
-			for(int player_point = 2;player_point <= 21;player_point++){
-				play(first_CARD,player_point,0);
-			}
-		}
+//		for(int first_CARD = 1;first_CARD < 12;first_CARD++){
+//			for(int player_point = 12;player_point <= 21;player_point++){
+//				play(first_CARD,player_point,1);
+//			}
+//		}
+//		for(int first_CARD = 1;first_CARD < 12;first_CARD++){
+//			for(int player_point = 2;player_point <= 21;player_point++){
+//				play(first_CARD,player_point,0);
+//			}
+//		}
+		play();
 	}
+	
 }
 void initial(){
 	for(int dealer = 0;dealer <= 11;dealer++){
@@ -216,19 +225,13 @@ signed main(){
 		for(int dealer = 1;dealer <= 11;dealer++){
 			int last = 11;
 			for(int player = 1;player <= 21;player++){
-				//cout << dealer << " " << player << ' ' << policy[dealer][player][i] << "\n";
 				if(policy[dealer][player][i] >= 0.5){
 					last = player;
 					x.push_back(dealer);
 					y.push_back(player);
 					
 				}
-//				for(int i = 0;i < 2;i++){
-//					cout << "dealer_first_card = " << dealer << " player = " << player << " ace = " << i << " : " << (policy[dealer][player][i] > 0.5 ? "Hit" : "Stand") << '\n';
-//				}
 			}
-		//	x.push_back(dealer);
-		//	y.push_back(last);
 		}
 		
 		if(i == 0){
