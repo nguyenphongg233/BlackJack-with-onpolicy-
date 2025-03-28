@@ -38,7 +38,7 @@ struct BlackJack{
 		}
 	}
 	char draw_card(){
-		return a[t++];
+		return a[Rand(0,51)];
 	}
 	void setup(){
 		for(int i = 0; i < 4; i++){
@@ -86,7 +86,7 @@ int random_choice(double hit){
 	return c <= hit;
 }
 vector<pair<pair<ii,ii>,double>> play_episode(int first_cardx = -1,int player_pointx = 0,int usable_ace = 0){
-	f.newgame();
+//	f.newgame();
 	Hand player, dealer;
 	
 	player.add_card(f.draw_card());
@@ -149,7 +149,6 @@ void play(int first_cardx = -1,int player_pointx = 0,int usable_ace = 0,double g
 	
 	double G = 0;
 	
-	epsilon = epsilon * 0.99995;
 	for(auto e : episode){
 		int first_card = e.X.X.X;
 		int player_point = e.X.X.Y;
@@ -172,7 +171,7 @@ void play(int first_cardx = -1,int player_pointx = 0,int usable_ace = 0,double g
 		}
 	}
 }
-void on_policy(int t = 100000){
+void on_policy(int t = 10000000){
 	while(t--){
 		//cout << t << '\n';
 //		for(int first_CARD = 1;first_CARD < 12;first_CARD++){
@@ -185,6 +184,7 @@ void on_policy(int t = 100000){
 //				play(first_CARD,player_point,0);
 //			}
 //		}
+//		epsilon = epsilon * 0.995;
 		play();
 	}
 	
@@ -208,7 +208,7 @@ void initial(){
 signed main(){
 	read();
 	freopen("dealer.out","w",stdout);
-	epsilon = 0.2;
+	epsilon = 0.1;
 	srand(time(0));
 	f.setup();
 	initial();
